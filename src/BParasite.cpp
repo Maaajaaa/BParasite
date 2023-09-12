@@ -46,7 +46,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ATC_MiThermometer.h>
+#include <BParasite.h>
 
 
 /*!
@@ -63,7 +63,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
      */
     if (advertisedDevice->haveServiceData()) {
       /* If this is a device with data we want to capture, add it to the whitelist */
-      if (advertisedDevice->getServiceData(NimBLEUUID("181A")) != "") {
+      if (advertisedDevice->getServiceData(NimBLEUUID("D2FC")) != "") {
         log_d("Adding %s to whitelist", std::string(advertisedDevice->getAddress()).c_str());
         NimBLEDevice::whiteListAdd(advertisedDevice->getAddress());
       }
@@ -73,7 +73,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
 
 // Set up BLE scanning
-void ATC_MiThermometer::begin(void)
+void BParasite::begin(void)
 {
     NimBLEDevice::init("");
     _pBLEScan = BLEDevice::getScan(); //create new scan
@@ -86,7 +86,7 @@ void ATC_MiThermometer::begin(void)
 
 
 // Get sensor data by running BLE device scan
-unsigned ATC_MiThermometer::getData(uint32_t duration) {
+unsigned BParasite::getData(uint32_t duration) {
     BLEScanResults foundDevices = _pBLEScan->start(duration, false /* is_continue */);
   
     log_d("Whitelist contains:");
@@ -109,49 +109,18 @@ unsigned ATC_MiThermometer::getData(uint32_t duration) {
                 int len = foundDevices.getDevice(i).getServiceData().length();
                 log_d("Length of ServiceData: %d", len);
                 
-                if (len == 15) {
-                    log_d("Custom format");
-                    // Temperature
-                    int temp_msb = foundDevices.getDevice(i).getServiceData().c_str()[7];
-                    int temp_lsb = foundDevices.getDevice(i).getServiceData().c_str()[6];
-                    data[n].temperature = (temp_msb << 8) | temp_lsb;
-
-                    // Humidity
-                    int hum_msb = foundDevices.getDevice(i).getServiceData().c_str()[9];
-                    int hum_lsb = foundDevices.getDevice(i).getServiceData().c_str()[8];
-                    data[n].humidity = (hum_msb << 8) | hum_lsb;
-
-                    // Battery voltage
-                    int volt_msb = foundDevices.getDevice(i).getServiceData().c_str()[11];
-                    int volt_lsb = foundDevices.getDevice(i).getServiceData().c_str()[10];
-                    data[n].batt_voltage = (volt_msb << 8) | volt_lsb;
-
-                    // Battery state [%]
-                    data[n].batt_level = foundDevices.getDevice(i).getServiceData().c_str()[12];         
+                float temp_celsius, humidity_percent, battery_voltage, moisture_percent;
+                int bledata[len] = {0};
+                for(int i = 0; i<len; i++){                    
+                    bledata[i] = foundDevices.getDevice(i).getServiceData().c_str()[i];
                 }
-                else if (len == 13) {
-                    log_d("ATC1441 format");
-                    
-                    // Temperature
-                    int temp_lsb = foundDevices.getDevice(i).getServiceData().c_str()[7];
-                    int temp_msb = foundDevices.getDevice(i).getServiceData().c_str()[6];
-                    data[n].temperature  = (temp_msb << 8) | temp_lsb;
-                    data[n].temperature *= 10;
 
-                    // Humidity
-                    data[n].humidity  = foundDevices.getDevice(i).getServiceData().c_str()[8];
-                    data[n].humidity *= 100;
-
-                    // Battery voltage
-                    int volt_lsb = foundDevices.getDevice(i).getServiceData().c_str()[11];
-                    int volt_msb = foundDevices.getDevice(i).getServiceData().c_str()[10];
-                    data[n].batt_voltage = (volt_msb << 8) | volt_lsb;
-
-                    // Battery state [%]
-                    data[n].batt_level = foundDevices.getDevice(i).getServiceData().c_str()[9];
-                } else {
-                    log_d("Unknown ServiceData format");
+                if(bledata[1] == 0x02){
+                    data[n].temperature = bledata[3] << 8 | bledata[2];
+                }else{    
+                log_e("varying (but valid as per standard) data format of temperature mismatch not implemented yet");
                 }
+
                 
                 // Received Signal Strength Indicator [dBm]
                 data[n].rssi = foundDevices.getDevice(i).getRSSI();
@@ -165,7 +134,7 @@ unsigned ATC_MiThermometer::getData(uint32_t duration) {
 
         
 // Set all array members invalid
-void ATC_MiThermometer::resetData(void)
+void BParasite::resetData(void)
 {
     for (int i=0; i < _known_sensors.size(); i++) {
         data[i].valid = false;

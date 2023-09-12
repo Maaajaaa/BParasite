@@ -6,7 +6,7 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-ATC_MiThermometer	KEYWORD1
+BParasite	KEYWORD1
 
 
 #######################################

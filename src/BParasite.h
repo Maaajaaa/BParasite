@@ -45,24 +45,26 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ATC_MiThermometer_h
-#define ATC_MiThermometer_h
+#ifndef BParasite_h
+#define BParasite_h
 
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
 
 // MiThermometer data struct / type
-struct MiThData_S {
+struct BParasite_Data_S {
         bool        valid;          //!< data valid
         int16_t     temperature;    //!< temperature x 100°C
         uint16_t    humidity;       //!< humidity x 100%
         uint16_t    batt_voltage;   //!< battery voltage [mv]
         uint8_t     batt_level;     //!< battery level   [%]
+        uint16_t    moisture;	    //!< 0.01% steps
+        uint32_t    brightness;     //!< 0.01 lx steps
         int16_t     rssi;           //!< RSSI [dBm]
 };
 
-typedef struct MiThData_S MiThData_t; //!< Shortcut for struct MiThData_S
+typedef struct BParasite_Data_S BParasite_Data_t; //!< Shortcut for struct MiThData_S
 
 
 /*!
@@ -70,14 +72,14 @@ typedef struct MiThData_S MiThData_t; //!< Shortcut for struct MiThData_S
 
   \brief BLE ATC_MiThermometer thermometer/hygrometer sensor client
 */
-class ATC_MiThermometer {
+class BParasite {
     public:
         /*!
         \brief Constructor.
         
         \param known_sensors    Vector of BLE MAC addresses of known sensors, e.g. {"11:22:33:44:55:66", "AA:BB:CC:DD:EE:FF"}
         */
-        ATC_MiThermometer(std::vector<std::string> known_sensors) {
+        BParasite(std::vector<std::string> known_sensors) {
             _known_sensors = known_sensors;
             data.resize(known_sensors.size());
         };
@@ -109,7 +111,7 @@ class ATC_MiThermometer {
         /*!
         \brief Sensor data.
         */
-        std::vector<MiThData_t>  data;
+        std::vector<BParasite_Data_t>  data;
         
     protected:
         std::vector<std::string> _known_sensors;
