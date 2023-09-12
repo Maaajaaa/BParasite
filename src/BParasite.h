@@ -1,15 +1,16 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// ATC_MiThermometer.h
+//BParasite.h
 //
 // Bluetooth low energy thermometer/hygrometer sensor client for MCUs supported by NimBLE-Arduino.
-// For sensors running ATC_MiThermometer firmware (see https://github.com/pvvx/ATC_MiThermometer)
+// For bparasite sensors using the BTHome protocol https://github.com/rbaron/b-parasite
 //
-// https://github.com/matthias-bs/ATC_MiThermometer
+// 
 //
 // Based on:
 // ---------
 // NimBLE-Arduino by h2zero (https://github.com/h2zero/NimBLE-Arduino)
 // LYWSD03MMC.py by JsBergbau (https://github.com/JsBergbau/MiTemperature2)
+// ATC_MiThermometer by matthias-bs (https://github.com/matthias-bs/ATC_MiThermometer)
 //
 // created: 11/2022
 //
@@ -39,6 +40,7 @@
 // History:
 //
 // 20221123 Created
+// 20230912 Modified to work with b-parasite by Maaajaaa
 //
 // ToDo: 
 // -
@@ -58,9 +60,8 @@ struct BParasite_Data_S {
         int16_t     temperature;    //!< temperature x 100°C
         uint16_t    humidity;       //!< humidity x 100%
         uint16_t    batt_voltage;   //!< battery voltage [mv]
-        uint8_t     batt_level;     //!< battery level   [%]
-        uint16_t    moisture;	    //!< 0.01% steps
-        uint32_t    brightness;     //!< 0.01 lx steps
+        uint16_t    soil_moisture;	    //!< 0.01% steps
+        uint32_t    illuminance;     //!< 0.01 lux steps
         int16_t     rssi;           //!< RSSI [dBm]
 };
 

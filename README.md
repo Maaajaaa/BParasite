@@ -1,67 +1,81 @@
-# ATC_MiThermometer
+# BParasite Arduino library
 
-[![CI](https://github.com/matthias-bs/ATC_MiThermometer/actions/workflows/CI.yml/badge.svg)](https://github.com/matthias-bs/ATC_MiThermometer/actions/workflows/CI.yml)
-[![GitHub release](https://img.shields.io/github/release/matthias-bs/ATC_MiThermometer?maxAge=3600)](https://github.com/matthias-bs/ATC_MiThermometer/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/matthias-bs/ATC_MiThermometer/blob/main/LICENSE)
-[![arduino-library-badge](https://www.ardu-badge.com/badge/ATC_MiThermometer.svg?)](https://www.ardu-badge.com/ATC_MiThermometer)
 
-Arduino BLE Client Library based on [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino) for receiving ATC_MiThermometer Data (as Advertising Data) - both the "custom" format and the original "atc1441" format are supported.
+Arduino BLE Client Library based on [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino) for receiving b-parasite BLE data (soil moisture, temperature, humidity, illuminance as well as battery voltage).
 
-This project allows to receive data from a battery-powered bluetooth low energy thermometer/hygrometer like the Xiaomi Mijia (LYWSD03MMC) running the custom firmware [ATC_MiThermometer](https://github.com/pvvx/ATC_MiThermometer). The software runs in the Arduino environment on all devices dupported by [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
+This project allows to receive data from a battery-powered bluetooth low energy soil moisture sensor [b-parasite](https://github.com/rbaron/b-parasite). 
 
-The [ATC_MiThermometer](https://github.com/pvvx/ATC_MiThermometer) firmware sends the sensor and status data as BLE advertisements, i.e. multiple clients can receive and use the sensor data.
+The b-parasite firmware sends the sensor and status data as BLE advertisements, i.e. multiple clients can receive and use the sensor data. This is done using the [BTHome Protcol](bthome.io)
 
-This project is the successor of [ESP32_ATC_MiThermometer_Library](https://github.com/matthias-bs/ESP32_ATC_MiThermometer_Library) - with all its benefits inherited from [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
+This project is heavily based on the [ATC_MiThermometer](https://github.com/matthias-bs/ATC_MiThermometer) - with all its benefits inherited from [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
 
 ## Example
 ```
-#include "ATC_MiThermometer.h"
+#include "BParasite.h"
 
 const int scanTime = 5; // BLE scan time in seconds
-
 // List of known sensors' BLE addresses
-std::vector<std::string> knownBLEAddresses = {"a4:c1:38:b8:1f:7f", "a4:c1:38:bf:e1:bc"};
+std::vector<std::string> knownBLEAddresses = {"01:23:45:67:89:AB","01:23:45:67:89:CD"};
 
-ATC_MiThermometer miThermometer(knownBLEAddresses);
+BParasite parasite(knownBLEAddresses);
 
+// Iteration counter
+int iteration = 0;
 
 void setup() {
+
+
     Serial.begin(115200);
+    // Print free heap before initialization
+    Serial.println("Starting:    Free heap is " + String(ESP.getFreeHeap()));
     
     // Initialization
-    miThermometer.begin();
+    parasite.begin();
+    
+    // Print free heap after initialization
+    Serial.println("Initialized: Free heap is " + String(ESP.getFreeHeap()));
 }
 
 void loop() {
     // Set sensor data invalid
-    miThermometer.resetData();
+    parasite.resetData();
     
     // Get sensor data - run BLE scan for <scanTime>
-    unsigned found = miThermometer.getData(scanTime);
+    unsigned found = parasite.getData(scanTime);
 
-    for (int i=0; i < miThermometer.data.size(); i++) {  
-        if (miThermometer.data[i].valid) {
+    for (int i=0; i < parasite.data.size(); i++) {  
+        if (parasite.data[i].valid) {
             Serial.println();
             Serial.printf("Sensor %d: %s\n", i, knownBLEAddresses[i].c_str());
-            Serial.printf("%.2f°C\n", miThermometer.data[i].temperature/100.0);
-            Serial.printf("%.2f%%\n", miThermometer.data[i].humidity/100.0);
-            Serial.printf("%.3fV\n",  miThermometer.data[i].batt_voltage/1000.0);
-            Serial.printf("%d%%\n",   miThermometer.data[i].batt_level);
-            Serial.printf("%ddBm\n",  miThermometer.data[i].rssi);
+            Serial.printf("%.2f°C\n", parasite.data[i].temperature/100.0);
+            Serial.printf("%.2f%% humidity\n", parasite.data[i].humidity/100.0);
+            Serial.printf("%.3fV\n",  parasite.data[i].batt_voltage/1000.0);
+            Serial.printf("%.2f%% soil moisture\n", parasite.data[i].soil_moisture/100.0);
+            Serial.printf("%.2flux\n", parasite.data[i].illuminance/100.0);
+            Serial.printf("%ddBm\n",  parasite.data[i].rssi);
             Serial.println();
          }
     }
-    Serial.print("Devices found: ");
-    Serial.println(found);
-    Serial.println();
+    Serial.println("BLE Devices found (total): " + String(found));
 
     // Delete results from BLEScan buffer to release memory
-    miThermometer.clearScanResults();
-    delay(5000);
-}
-```
-## Source Code Documentation
-https://matthias-bs.github.io/ATC_MiThermometer/
+    parasite.clearScanResults();
+    
+    // Print iteration counter and free heap
+    Serial.println("Iteration " + String(iteration++) + " - Free heap is " + String(ESP.getFreeHeap()));
+    Serial.println("---");
 
-## Alternative
-You might want to have a look at [Theengs Decoder](https://decoder.theengs.io/). It is also built on NimBLE-Arduino, runs on ESP32, seems to decode both variants of the alternative LYWSD03MMC firmware and many devices more.
+    delay(2000);
+}
+
+```
+
+### Similar Projectss
+
+There's also an implementation of this sensor for ESPHome which I've modified to work with currrent data called [esphome_b_parasite_component](https://github.com/Maaajaaa/esphome_b_parasite_component)
+
+### Todos
+
+- Adding the library to the Arduino and Platformio library collections
+- implementing a non-blocking example like [this](https://github.com/matthias-bs/ATC_MiThermometer/blob/main/examples/ATC_MiThermometer_Nonblocking/ATC_MiThermometer_Nonblocking.ino)

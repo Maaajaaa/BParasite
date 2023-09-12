@@ -1,15 +1,16 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// ATC_MiThermometer.cpp
+//BParasite.cpp
 //
 // Bluetooth low energy thermometer/hygrometer sensor client for MCUs supported by NimBLE-Arduino.
-// For sensors running ATC_MiThermometer firmware (see https://github.com/pvvx/ATC_MiThermometer)
+// For bparasite sensors using the BTHome protocol https://github.com/rbaron/b-parasite
 //
-// https://github.com/matthias-bs/ATC_MiThermometer
+// 
 //
 // Based on:
 // ---------
 // NimBLE-Arduino by h2zero (https://github.com/h2zero/NimBLE-Arduino)
 // LYWSD03MMC.py by JsBergbau (https://github.com/JsBergbau/MiTemperature2)
+// ATC_MiThermometer by matthias-bs (https://github.com/matthias-bs/ATC_MiThermometer)
 //
 // created: 11/2022
 //
@@ -40,6 +41,7 @@
 //
 // 20221123 Created
 // 20221223 Added support for ATC1441 format
+// 20230912 Modified to work with b-parasite by Maaajaaa
 //
 // ToDo: 
 // -
@@ -89,17 +91,17 @@ void BParasite::begin(void)
 unsigned BParasite::getData(uint32_t duration) {
     BLEScanResults foundDevices = _pBLEScan->start(duration, false /* is_continue */);
   
-    log_d("Whitelist contains:");
+    Serial.println("Whitelist contains:");
     for (auto i=0; i<NimBLEDevice::getWhiteListCount(); ++i) {
         log_d("%s", NimBLEDevice::getWhiteListAddress(i).toString().c_str());
     }
   
-    log_d("Assigning scan results...");
+    Serial.println("Assigning scan results...");
     for (unsigned i=0; i<foundDevices.getCount(); i++) {
         
         // Match all devices found against list of known sensors
         for (unsigned n = 0; n < _known_sensors.size(); n++) {
-            log_d("Found: %s  comparing to: %s", 
+           log_v("Found: %s  comparing to: %s",
                   foundDevices.getDevice(i).getAddress().toString().c_str(), 
                   BLEAddress(_known_sensors[n]).toString().c_str());
             if (foundDevices.getDevice(i).getAddress() == BLEAddress(_known_sensors[n])) {
@@ -109,23 +111,42 @@ unsigned BParasite::getData(uint32_t duration) {
                 int len = foundDevices.getDevice(i).getServiceData().length();
                 log_d("Length of ServiceData: %d", len);
                 
-                float temp_celsius, humidity_percent, battery_voltage, moisture_percent;
-                int bledata[len] = {0};
-                for(int i = 0; i<len; i++){                    
-                    bledata[i] = foundDevices.getDevice(i).getServiceData().c_str()[i];
-                }
+                
+                std::string bledata = foundDevices.getDevice(i).getServiceData();
 
+                //temperature
                 if(bledata[1] == 0x02){
                     data[n].temperature = bledata[3] << 8 | bledata[2];
                 }else{    
-                log_e("varying (but valid as per standard) data format of temperature mismatch not implemented yet");
+                    Serial.println("varying (but valid as per standard) data format of temperature mismatch not implemented yet");
                 }
 
-                
+                if(bledata[4] == 0x03){
+                    // Relative air humidity as 2 bytes unsigned int
+                    data[n].humidity = bledata[6] << 8 | bledata[5];
+                }else{    
+                    Serial.println("varying (but valid as per standarasd) data format of humiditz mismatch not implemented yet");
+                }
+
+                //bit 7 is 0x05 illuminance, followed by 3 bytes of illuminance, factor is 0.01 lux
+                // Ambient light in lux
+                data[n].illuminance = (bledata[8] << 16 | bledata[9] << 8 | bledata[10]);
+
+                if(bledata[11] == 0x0c){
+                    // Battery voltage in millivolts.
+                    data[n].batt_voltage = bledata[13] << 8 | bledata[12];
+                }else{    
+                    Serial.println("varying (but valid as per standarasd) data format of voltage mismatch not implemented yet");
+                }
+
+                if(bledata[14] ==  0x14){
+                    // Relative soil moisture in 0.01 %
+                    data[n].soil_moisture = bledata[16] << 8 | bledata[15];
+                }else{    
+                    Serial.println("varying (but valid as per standarasd) data format of moisture mismatch not implemented yet");
+                }                
                 // Received Signal Strength Indicator [dBm]
                 data[n].rssi = foundDevices.getDevice(i).getRSSI();
-            } else {
-                log_d();
             }
         }
     }
