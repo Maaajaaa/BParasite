@@ -89,7 +89,7 @@ class BParasite {
         BParasite(std::vector<std::string> known_sensors, std::vector<std::string> names) {
             _known_sensors = known_sensors;
             data.resize(known_sensors.size());
-            for(i = 0; i < known_sensors.size(); i++){
+            for(int i = 0; i < known_sensors.size(); i++){
                 data[i].name = names[i];
             }
         };
