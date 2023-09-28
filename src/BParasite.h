@@ -63,6 +63,7 @@ struct BParasite_Data_S {
         uint16_t    soil_moisture;	    //!< 0.01% steps
         uint32_t    illuminance;     //!< 0.01 lux steps
         int16_t     rssi;           //!< RSSI [dBm]
+        std::string name;
 };
 
 typedef struct BParasite_Data_S BParasite_Data_t; //!< Shortcut for struct MiThData_S
@@ -83,6 +84,14 @@ class BParasite {
         BParasite(std::vector<std::string> known_sensors) {
             _known_sensors = known_sensors;
             data.resize(known_sensors.size());
+        };
+
+        BParasite(std::vector<std::string> known_sensors, std::vector<std::string> names) {
+            _known_sensors = known_sensors;
+            data.resize(known_sensors.size());
+            for(i = 0; i < known_sensors.size(); i++){
+                data[i].name = names[i];
+            }
         };
 
         /*!
