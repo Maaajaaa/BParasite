@@ -91,12 +91,12 @@ void BParasite::begin(void)
 unsigned BParasite::getData(uint32_t duration) {
     BLEScanResults foundDevices = _pBLEScan->start(duration, false /* is_continue */);
   
-    Serial.println("Whitelist contains:");
+    log_d("Whitelist contains:");
     for (auto i=0; i<NimBLEDevice::getWhiteListCount(); ++i) {
         log_d("%s", NimBLEDevice::getWhiteListAddress(i).toString().c_str());
     }
   
-    Serial.println("Assigning scan results...");
+    log_d("Assigning scan results...");
     for (unsigned i=0; i<foundDevices.getCount(); i++) {
         
         // Match all devices found against list of known sensors
