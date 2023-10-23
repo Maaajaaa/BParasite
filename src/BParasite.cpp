@@ -89,7 +89,7 @@ void BParasite::begin(void)
 
 // Get sensor data by running BLE device scan
 unsigned BParasite::getData(uint32_t duration) {
-    BLEScanResults foundDevices = _pBLEScan->start(duration, false /* is_continue */);
+    BLEScanResults foundDevices = _pBLEScan->getResults(duration, false /* is_continue */);
   
     log_d("Whitelist contains:");
     for (auto i=0; i<NimBLEDevice::getWhiteListCount(); ++i) {
