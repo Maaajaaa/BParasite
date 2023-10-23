@@ -79,7 +79,7 @@ void BParasite::begin(void)
 {
     NimBLEDevice::init("");
     _pBLEScan = BLEDevice::getScan(); //create new scan
-    _pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+    _pBLEScan->setScanCallbacks(new MyAdvertisedDeviceCallbacks());
     _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
     _pBLEScan->setInterval(100);
     _pBLEScan->setFilterPolicy(BLE_HCI_SCAN_FILT_NO_WL);
